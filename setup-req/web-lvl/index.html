@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>d4rkc0de // Admin Portal</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="terminal">
+  <h1>&gt; d4rkc0de ADMIN PORTAL_</h1>
+  <div class="sub">restricted access - authorized personnel only</div>
+
+  <label for="user">username</label>
+  <input type="text" id="user" autocomplete="off">
+
+  <label for="pass">password</label>
+  <input type="password" id="pass" autocomplete="off">
+
+  <button onclick="attemptLogin()">[ AUTHENTICATE ]</button>
+
+  <div id="msg"></div>
+
+  <div class="hint">
+    HINT: If the browser can validate it, the browser must know it. If the browser knows the password, maybe you can too.
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
