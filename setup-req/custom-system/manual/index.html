@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NULL SYSTEM // Field Manual</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#090a0c;color:#d7d7d7;font:15px/1.65 ui-monospace,SFMono-Regular,Menlo,monospace}
+main{max-width:820px;margin:auto;padding:36px 20px}
+h1{font-size:24px;color:#fff;margin-bottom:4px}
+h2{font-size:16px;color:#fff;margin-top:34px}
+.dim{color:#777}
+.box{border:1px solid #292c31;padding:18px;margin:20px 0;background:#0d0f12}
+code{color:#fff}
+pre{overflow:auto;border:1px solid #202329;padding:14px;background:#050607}
+a{color:#fff}
+</style>
+</head>
+<body>
+<main>
+<h1>NULL SYSTEM // FIELD MANUAL</h1>
+<div class="dim">revision 0.3 · operator reference</div>
+
+<div class="box">
+<strong>This is not Linux.</strong><br>
+Do not assume that familiar operating-system concepts exist here.
+</div>
+
+<h2>01 — THE WORLD</h2>
+<p>The system contains <b>entities</b>. Entities have an identity, a state, and relationships to other entities.</p>
+<p>They are not files and the identifiers are not paths.</p>
+
+<h2>02 — OBSERVATION</h2>
+<p>Observation does not change system state. If an entity tells you that something is required, treat that statement as part of the system's rules.</p>
+
+<h2>03 — STATE</h2>
+<p>Entities can be <code>dormant</code>, <code>active</code>, or <code>sealed</code>. State-changing operations may have prerequisites.</p>
+
+<h2>04 — RELATIONSHIPS</h2>
+<p>An entity may contain links to other entities. Following links is more useful than guessing names.</p>
+
+<h2>05 — DATA</h2>
+<p>Some entities contain data in a representation that is not immediately human-readable. Identify the representation before trying to interpret it.</p>
+
+<h2>06 — THE INTERFACE</h2>
+<pre>scan
+observe &lt;entity&gt;
+wake &lt;entity&gt;
+trace &lt;entity&gt;
+enter &lt;entity&gt;
+read &lt;entity&gt;
+decode &lt;entity&gt;
+emit &lt;entity&gt;
+status
+reset</pre>
+
+<p class="dim">The manual describes concepts. It does not describe the solution.</p>
+</main>
+</body>
+</html>

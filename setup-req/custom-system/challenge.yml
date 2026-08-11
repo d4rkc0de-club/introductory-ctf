@@ -1,0 +1,35 @@
+name: NULL//SYSTEM
+author: d4rkc0de
+category: Misc
+description: |
+  You have access to a machine. Nobody told you what it runs.
+  Nobody told you what the commands mean.
+
+  This is not Linux.
+
+  Observe the system, infer its rules, and recover the flag.
+
+  **Connection:** `nc <host> 31337`
+value: 300
+type: standard
+state: visible
+flags:
+  - type: static
+    content: d4rk{you_stopped_thinking_in_linux}c0de
+hints:
+  - content: "Stop looking for a filesystem. What does `scan` actually show you?"
+    cost: 0
+  - content: "Observation does not change anything. State-changing actions are different."
+    cost: 0
+  - content: "Some entities tell you exactly what they require before they can be entered."
+    cost: 0
+tags:
+  - intuition
+  - custom-system
+  - misc
+  - beginner
+topics:
+  - state machines
+  - command inference
+  - observation
+connection_info: nc <host> 31337
