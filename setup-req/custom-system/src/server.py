@@ -110,13 +110,7 @@ class Session:
             return "active: " + (", ".join(active) if active else "none")
 
         if cmd == "scan":
-            return """\
-A7  dormant
-B2  dormant
-C1  dormant
-D9  sealed
-E4  dormant
-"""
+            return "\n".join(f"{k:<3} {v['state']}" for k, v in self.nodes.items())
 
         if not args:
             return f"{cmd} requires an entity."
@@ -141,12 +135,12 @@ requires: {req}"""
             return f"{key} -> " + (" -> ".join(n["links"]) if n["links"] else "end")
 
         if cmd == "wake":
-            if n["state"] == "sealed":
-                return f"{key} is sealed. It cannot be awakened."
             if n["state"] == "active":
                 return f"{key} is already active."
             missing = [r for r in n["requires"] if self.nodes[r]["state"] != "active"]
             if missing:
+                if n["state"] == "sealed":
+                    return f"{key} is sealed. It cannot be awakened."
                 return f"cannot wake {key}. requires: " + " ".join(missing)
             n["state"] = "active"
             return f"{key} -> active"
@@ -202,74 +196,125 @@ A decoder may be useful."""
 
 import json
 
-WEB_HTML = """<!DOCTYPE html>
+WEB_HTML = r"""<!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8">
 <title>NULL SYSTEM v0.3</title>
 <style>
-  body { background: #0c0d12; color: #00ff9d; font-family: 'Courier New', monospace; padding: 20px; margin: 0; }
-  #term { max-width: 800px; margin: 20px auto; background: #050608; border: 1px solid #00ff9d33; padding: 20px; border-radius: 8px; box-shadow: 0 0 20px rgba(0,255,157,0.1); }
-  pre { white-space: pre-wrap; font-size: 14px; margin: 0 0 10px 0; line-height: 1.4; color: #00ff9d; }
-  .prompt-line { display: flex; align-items: center; margin-top: 10px; }
-  .prompt-label { margin-right: 8px; font-weight: bold; color: #00ff9d; }
-  input { flex: 1; background: transparent; border: none; outline: none; color: #00ff9d; font-family: 'Courier New', monospace; font-size: 14px; }
+  * { box-sizing: border-box; }
+  body {
+    background-color: #000000;
+    color: #ffffff;
+    font-family: monospace;
+    margin: 0;
+    padding: 20px;
+  }
+  pre {
+    font-family: monospace;
+    white-space: pre-wrap;
+    word-break: break-all;
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.3;
+  }
+  .input-container {
+    display: flex;
+    margin-top: 5px;
+  }
+  .prompt {
+    color: #ffffff;
+    font-family: monospace;
+    font-size: 14px;
+    margin-right: 8px;
+  }
+  input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #ffffff;
+    font-family: monospace;
+    font-size: 14px;
+    width: 100%;
+    padding: 0;
+  }
 </style>
 </head>
 <body>
-<div id="term">
-  <pre id="out"></pre>
-  <div class="prompt-line">
-    <span class="prompt-label">&gt;</span>
-    <input type="text" id="cmd" autofocus autocomplete="off">
-  </div>
+<pre id="output"></pre>
+<div class="input-container">
+  <span class="prompt">&gt;</span>
+  <input type="text" id="cmd" autofocus autocomplete="off" spellcheck="false">
 </div>
 <script>
-  const banner = `╔══════════════════════════════════════╗
-║          NULL SYSTEM v0.3            ║
-║          node: UNIDENTIFIED          ║
-╚══════════════════════════════════════╝
-
-awake.
-
-The system is deterministic.
-Every response contains information.
-There are no false leads.
-
-Type \`help\` if you need the interface.
-`;
-  const out = document.getElementById('out');
+  const output = document.getElementById('output');
   const input = document.getElementById('cmd');
-  out.textContent = banner;
+
+  const banner = "╔══════════════════════════════════════╗\n" +
+"║          NULL SYSTEM v0.3            ║\n" +
+"║          node: UNIDENTIFIED          ║\n" +
+"╚══════════════════════════════════════╝\n\n" +
+"awake.\n\n" +
+"The system is deterministic.\n" +
+"Every response contains information.\n" +
+"There are no false leads.\n\n" +
+"Type 'help' if you need the interface.\n";
+
+  output.textContent = banner;
+
+  let sessionToken = localStorage.getItem('null_sys_token') || Math.random().toString(36).substring(2);
+  localStorage.setItem('null_sys_token', sessionToken);
 
   input.addEventListener('keydown', async (e) => {
     if (e.key === 'Enter') {
-      const val = input.value.trim();
+      const val = input.value;
       input.value = '';
-      out.textContent += '> ' + val + '\\n';
-      if (!val) return;
+      output.textContent += '> ' + val + '\n';
       try {
-        const res = await fetch('api/cmd', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({cmd: val}) });
+        const res = await fetch('api/cmd', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({cmd: val, token: sessionToken})
+        });
         const data = await res.json();
-        if (data.output) out.textContent += data.output + '\\n';
+        if (data.output) {
+          output.textContent += data.output + '\n';
+        }
       } catch (err) {
-        out.textContent += 'error connecting to node\\n';
+        output.textContent += 'connection error\n';
       }
       window.scrollTo(0, document.body.scrollHeight);
     }
   });
+
+  document.addEventListener('click', () => input.focus());
 </script>
 </body>
 </html>
 """
 
+SESSIONS = {}
+
+def get_http_session(token):
+    token = token or "default"
+    if token not in SESSIONS:
+        SESSIONS[token] = Session()
+    return SESSIONS[token]
+
 def handle_http(conn, raw_data, session):
     headers_end = raw_data.find(b"\r\n\r\n")
     headers_part = raw_data[:headers_end] if headers_end != -1 else raw_data
-    first_line = headers_part.split(b"\r\n")[0].decode('utf-8', 'ignore')
+    lines = headers_part.split(b"\r\n")
+    first_line = lines[0].decode('utf-8', 'ignore')
     parts = first_line.split(" ")
     method = parts[0] if len(parts) > 0 else "GET"
     path = parts[1] if len(parts) > 1 else "/"
+
+    headers = {}
+    for line in lines[1:]:
+        if b":" in line:
+            k, v = line.split(b":", 1)
+            headers[k.decode('utf-8', 'ignore').strip().lower()] = v.decode('utf-8', 'ignore').strip()
 
     if method == "OPTIONS":
         resp = "HTTP/1.1 200 OK\r\nAccess-Control-Allow-Origin: *\r\nAccess-Control-Allow-Headers: *\r\nContent-Length: 0\r\n\r\n"
@@ -278,20 +323,25 @@ def handle_http(conn, raw_data, session):
 
     if method == "POST" and ("cmd" in path):
         body = raw_data[headers_end+4:] if headers_end != -1 else b""
+        cmd = ""
+        token = headers.get("x-session-token") or "default"
         try:
             payload = json.loads(body.decode('utf-8', 'ignore'))
             cmd = payload.get("cmd", "")
+            if payload.get("token"):
+                token = payload.get("token")
         except Exception:
-            cmd = ""
-        out = session.handle(cmd)
+            pass
+        sess = get_http_session(token)
+        out = sess.handle(cmd)
         resp_json = json.dumps({"output": out})
-        resp = f"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nAccess-Control-Allow-Origin: *\r\nContent-Length: {len(resp_json)}\r\n\r\n{resp_json}"
-        conn.sendall(resp.encode())
+        resp = f"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nAccess-Control-Allow-Origin: *\r\nContent-Length: {len(resp_json.encode('utf-8'))}\r\n\r\n{resp_json}"
+        conn.sendall(resp.encode('utf-8'))
         return
 
     resp_body = WEB_HTML
-    resp = f"HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nAccess-Control-Allow-Origin: *\r\nContent-Length: {len(resp_body)}\r\n\r\n{resp_body}"
-    conn.sendall(resp.encode())
+    resp = f"HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nAccess-Control-Allow-Origin: *\r\nContent-Length: {len(resp_body.encode('utf-8'))}\r\n\r\n{resp_body}"
+    conn.sendall(resp.encode('utf-8'))
 
 def client(conn, addr):
     session = Session()
@@ -345,4 +395,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
