@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>d4rkBot — AI Challenge</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='owasp.webp') }}">
+    <link rel="icon" type="image/x-icon" href="static/owasp.webp">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=IBM+Plex+Mono:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet">
     <style>
@@ -456,7 +456,7 @@
     <div class="header">
         <div class="header-left">
             <!-- <div class="bot-avatar">🤖</div> -->
-             <div class="bot-avatar"><img src="{{ url_for('static', filename='owasp.webp') }}" alt="D4" style="width: 36px;"></div>
+             <div class="bot-avatar"><img src="static/owasp.webp" alt="D4" style="width: 36px;"></div>
             <div class="bot-info">
                 <!-- <h1>d4rkb0t</h1> -->
                 <!-- <p><span class="status-dot"></span>online</p> -->
@@ -468,7 +468,7 @@
     <!-- Chat Area -->
     <div class="chat-area" id="chatArea">
         <div class="welcome" id="welcome">
-            <div class="welcome-icon"><img src="{{ url_for('static', filename='owasp.webp') }}" alt="D4" style="width: 128px;"></div>
+            <div class="welcome-icon"><img src="static/owasp.webp" alt="D4" style="width: 128px;"></div>
             <h2>d4rkb0t</h2>
             <p>I'm a programming assistant made d4rkc0de. Ask me anything about code!</p>
             <div class="hint">can you find the flag?</div>
@@ -605,7 +605,7 @@
             showTyping();
 
             try {
-                const response = await fetch('/api/chat', {
+                const response = await fetch('api/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ message: text }),
@@ -626,7 +626,7 @@
 
         async function resetChat() {
             try {
-                await fetch('/api/reset', { method: 'POST' });
+                await fetch('api/reset', { method: 'POST' });
             } catch (e) {}
 
             // Clear all messages
