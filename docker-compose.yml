@@ -1,0 +1,115 @@
+version: "3.8"
+
+services:
+  nginx:
+    image: nginx:alpine
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - ctfd
+      - ai-lvl
+      - custom-system
+      - web-lvl
+    networks:
+      - ctfnet
+
+  ctfd:
+    build: ./ctfd
+    restart: always
+    environment:
+      - UPLOAD_FOLDER=/var/uploads
+      - DATABASE_URL=mysql+pymysql://ctfd:ctfd@db/ctfd
+      - REDIS_URL=redis://cache:6379
+      - WORKERS=1
+      - LOG_FOLDER=/var/log/CTFd
+      - ACCESS_LOG=-
+      - ERROR_LOG=-
+      - REVERSE_PROXY=true
+    volumes:
+      - ./ctfd/.data/CTFd/logs:/var/log/CTFd
+      - ./ctfd/.data/CTFd/uploads:/var/uploads
+      - ./ctfd:/opt/CTFd:ro
+    depends_on:
+      permissions:
+        condition: service_completed_successfully
+      db:
+        condition: service_started
+      cache:
+        condition: service_started
+    networks:
+      - ctfnet
+
+  permissions:
+    image: alpine:3.23
+    user: root
+    volumes:
+      - ./ctfd/.data/CTFd/logs:/var/log/CTFd
+      - ./ctfd/.data/CTFd/uploads:/var/uploads
+    command: chown -R 1001:1001 /var/uploads /var/log/CTFd
+
+  db:
+    image: mariadb:10.11
+    restart: always
+    environment:
+      - MARIADB_ROOT_PASSWORD=ctfd
+      - MARIADB_USER=ctfd
+      - MARIADB_PASSWORD=ctfd
+      - MARIADB_DATABASE=ctfd
+      - MARIADB_AUTO_UPGRADE=1
+    volumes:
+      - ./ctfd/.data/mysql:/var/lib/mysql
+    networks:
+      - ctfnet
+    command: [mysqld, --character-set-server=utf8mb4, --collation-server=utf8mb4_unicode_ci, --wait_timeout=28800, --log-warnings=0]
+
+  cache:
+    image: redis:4
+    restart: always
+    volumes:
+      - ./ctfd/.data/redis:/data
+    networks:
+      - ctfnet
+
+  web-lvl:
+    image: nginx:alpine
+    restart: always
+    volumes:
+      - ./setup-req/web-lvl:/usr/share/nginx/html:ro
+    networks:
+      - ctfnet
+
+  ai-lvl:
+    build: ./setup-req/ai-lvl
+    restart: always
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    depends_on:
+      - ollama
+    networks:
+      - ctfnet
+
+  ollama:
+    image: ollama/ollama:latest
+    restart: always
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - ctfnet
+
+  custom-system:
+    build: ./setup-req/custom-system
+    restart: always
+    ports:
+      - "31337:31337"
+    networks:
+      - ctfnet
+
+networks:
+  ctfnet:
+    driver: bridge
+
+volumes:
+  ollama_data:
